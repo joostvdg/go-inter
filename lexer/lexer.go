@@ -1,6 +1,9 @@
 package lexer
 
-import "github.com/joostvdg/go-inter/token"
+import (
+	"github.com/joostvdg/go-inter/token"
+	"strings"
+)
 
 type Lexer struct {
 	input        string
@@ -85,6 +88,9 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LBRACE, l.ch)
 	case '}':
 		tok = newToken(token.RBRACE, l.ch)
+	case '"':
+		tok.Type = token.STRING
+		tok.Literal = l.readString()
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
@@ -151,4 +157,20 @@ func (l *Lexer) peekChar() byte {
 	} else {
 		return l.input[l.readPosition]
 	}
+}
+
+func (l *Lexer) readString() string {
+	position := l.position + 1
+
+	for {
+		l.readChar()
+		if l.ch == '\\' && l.peekChar() == '"' {
+			l.readChar()
+		} else if l.ch == '"' || l.ch == 0 {
+			break
+		}
+	}
+	baseString := l.input[position:l.position]
+	strings.Replace(baseString, "\\\\\\", "\\", -1)
+	return baseString
 }
